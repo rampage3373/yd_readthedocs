@@ -3,36 +3,30 @@
 =========
 
 **投资者需要做哪些以保证性能最优化？**
-关于延时，你需要关注的就是两个：
-1. 做好席位优选，这是最重要的
-2. 保证你调用API的延时在450ns以下，这个延时指调用insertOrder到报单实际出柜台的时间间隔
+| 关于延时，你需要关注的就是两个：
+| 1. 做好席位优选，这是最重要的
+| 2. 保证你调用API的延时在450ns以下，这个延时指调用insertOrder到报单实际出柜台的时间间隔
 
 **为什么在login的时候coredump？**
-
-首先，检查产生的coredump文件，程序是否在getIPMacInfo函数出错退出，如果是的话，可能是因为网卡问题导致的。请手工调用getifaddrs(struct ifaddrs \**ifs)查看是否正常。
+| 首先，检查产生的coredump文件，程序是否在getIPMacInfo函数出错退出，如果是的话，可能是因为网卡问题导致的。请手工调用getifaddrs(struct ifaddrs \**ifs)查看是否正常。
 
 **为什么会在getIPMacInfo函数中coredump？**  
-
-通常是客户的网卡配置出现问题，请客户使用以下代码文件进行调试，我们程序中就是通过这段代码来获取客户的MAC的。
+| 通常是客户的网卡配置出现问题，请客户使用以下代码文件进行调试，我们程序中就是通过这段代码来获取客户的MAC的。
 
 **如何实现多用户登录？**
-
-易达系统支持在同一个进程中实例化多少API实例，由于报单的线程即为客户线程本身，因此只需要按需对回报接收线程绑核处理即可。如果策略关心回报速度或者会在回报中下单，建议给每一个API对象的接收线程绑核，并且设置TradingServerTimeout=-1忙查询回报。如果希望节约内核，建议所有API对象绑定在一个核上，并且设置TradingServerTimeout为一个大于0的值。
+| 易达系统支持在同一个进程中实例化多少API实例，由于报单的线程即为客户线程本身，因此只需要按需对回报接收线程绑核处理即可。如果策略关心回报速度或者会在回报中下单，建议给每一个API对象的接收线程绑核，并且设置TradingServerTimeout=-1忙查询回报。如果希望节约内核，建议所有API对象绑定在一个核上，并且设置TradingServerTimeout为一个大于0的值。
 
 **如果UDP行情会发生丢包，如何重发？**
-
-由于本系统面向的客户的特殊性，在交易机会错失以后，补单是没有意义的，所以本系统不考虑重发
+| 由于本系统面向的客户的特殊性，在交易机会错失以后，补单是没有意义的，所以本系统不考虑重发
 
 **如果只用交易，不用MD data，是否只有TCPTradingSocketCPUID和TCPTradingCPUID两个线程？绑定两个核就够了？**
-
-如果不用MD（ConnectTCPMarketData=no且ReceiveUDPMarketData=no），只有TCPTradingCPUID一个线程，绑定一个核就够了。TCPTradingCPUID是指“Affinity CPU ID for thread to receive TCP trading notifications, -1 indicate no need to set CPU affinity”，也就是说收报单和成交回报线程所需要的CPUID。TCPTradingSocketCPUID是指“Affinity CPU ID for incoming message of TCP trading socket, -1 indicate no need to set CPU affinity. Ignored in windows”，也就是说将socket的接收终端指定到哪个CPUID上，并不需要单独分配一个CPU给它。从Linux kernel的解释上来说，如果将Socket的接收软中断直接指定给接收CPU会提高性能并降低延迟，因此TCPTradingSocketCPUID应该设置为TCPTradingCPUID。实际测试结果表明并没有明显的性能提升，可能的原因是onload bypass stack已经做了优化处理。
+| 如果不用MD（ConnectTCPMarketData=no且ReceiveUDPMarketData=no），只有TCPTradingCPUID一个线程，绑定一个核就够了。TCPTradingCPUID是指“Affinity CPU ID for thread to receive TCP trading notifications, -1 indicate no need to set CPU affinity”，也就是说收报单和成交回报线程所需要的CPUID。TCPTradingSocketCPUID是指“Affinity CPU ID for incoming message of TCP trading socket, -1 indicate no need to set CPU affinity. Ignored in windows”，也就是说将socket的接收终端指定到哪个CPUID上，并不需要单独分配一个CPU给它。从Linux kernel的解释上来说，如果将Socket的接收软中断直接指定给接收CPU会提高性能并降低延迟，因此TCPTradingSocketCPUID应该设置为TCPTradingCPUID。实际测试结果表明并没有明显的性能提升，可能的原因是onload bypass stack已经做了优化处理。
 
 **因为onload-latency是busy_loop，如果开启，加上之前两个，是不是要三个？**
-
-onload提供了kernel bypass的TCP/IP协议栈，这个协议栈有部分还是运行在kernel（主要是驱动程序接收、DMA和发送完毕的中断通知），有部分运行在调用recv和send的用户线程上。运行在kernel的部分一般会以中断的方式运行在0号CPU上（因此在绑定的时候尽可能将0号CPU空出来，否则整个系统的性能会显著下降，因为影响了操作系统）。send调用是由策略线程来发起的，ydAPI中会等待发送成功后返回；recv线程（也就是TCPTradingCPUID）只接收回报信息。开启onload并没有增加新的线程。 
+| onload提供了kernel bypass的TCP/IP协议栈，这个协议栈有部分还是运行在kernel（主要是驱动程序接收、DMA和发送完毕的中断通知），有部分运行在调用recv和send的用户线程上。运行在kernel的部分一般会以中断的方式运行在0号CPU上（因此在绑定的时候尽可能将0号CPU空出来，否则整个系统的性能会显著下降，因为影响了操作系统）。send调用是由策略线程来发起的，ydAPI中会等待发送成功后返回；recv线程（也就是TCPTradingCPUID）只接收回报信息。开启onload并没有增加新的线程。 
 
 **亲和性是否用Numactl设置总核数就行，比如numactl -C 0,1,2，不需要单独指定线程？**
-这个问题比较复杂。首先，高速网卡一般安装在直连0号物理CPU（可以有多个核），可以使用lspci –vvv | grep Solarflare来查看该网卡在哪个物理CPU上，
+| 这个问题比较复杂。首先，高速网卡一般安装在直连0号物理CPU（可以有多个核），可以使用lspci –vvv \| grep Solarflare来查看该网卡在哪个物理CPU上，
 
 .. code-block:: console
 
@@ -44,10 +38,10 @@ onload提供了kernel bypass的TCP/IP协议栈，这个协议栈有部分还是�
    Interrupt: pin A routed to IRQ 56
    NUMA node: 0
 
-上例中安装在0号物理CPU上。如果从1号物理CPU上的核去接收和发送，必须通过CPU之间的QPI总线，测试表明会带来1微左右的性能惩罚。如果CPU性能好，主频高，惩罚可能小一点。因此指定CPU编号时需确保调用ydAPI的线程运行在网卡直连的物理CPU的核上。可以通过lscpu获取这些编号信息。其次不能通过numactl来绑定。如果用这种方法绑定，调度程序会在这些CPU之间调度各个进程和线程，如果发生线程在CPU间的切换，性能的惩罚比上述网卡的还大，甚至达到毫秒的级别。应该直接指定CPU编号，而且这个CPU只指定给一个线程使用。第三，接收线程是使用忙等方式，其CPU使用率会达到100%，如果多个线程在同一个CPU核上，其性能会显著下降。特别是如果隔离了CPU，操作系统将不再为这个CPU核提供时间片调度服务，除非正在运行的线程主动放弃，否则其他线程无法获得CPU运行机会，会被饿死。第四，和ydAPI有关的线程尽可能绑定在同一个物理CPU的不同核上。
+| 上例中安装在0号物理CPU上。如果从1号物理CPU上的核去接收和发送，必须通过CPU之间的QPI总线，测试表明会带来1微左右的性能惩罚。如果CPU性能好，主频高，惩罚可能小一点。因此指定CPU编号时需确保调用ydAPI的线程运行在网卡直连的物理CPU的核上。可以通过lscpu获取这些编号信息。其次不能通过numactl来绑定。如果用这种方法绑定，调度程序会在这些CPU之间调度各个进程和线程，如果发生线程在CPU间的切换，性能的惩罚比上述网卡的还大，甚至达到毫秒的级别。应该直接指定CPU编号，而且这个CPU只指定给一个线程使用。第三，接收线程是使用忙等方式，其CPU使用率会达到100%，如果多个线程在同一个CPU核上，其性能会显著下降。特别是如果隔离了CPU，操作系统将不再为这个CPU核提供时间片调度服务，除非正在运行的线程主动放弃，否则其他线程无法获得CPU运行机会，会被饿死。第四，和ydAPI有关的线程尽可能绑定在同一个物理CPU的不同核上。
 
-如果启动时候用了onload,是否还需要在config改#RunPosition=OnloadLAN？
-本质上来说，RunPosition=OnloadLan代表一组参数，实际与onload没有直接关系。
+**如果启动时候用了onload,是否还需要在config改#RunPosition=OnloadLAN？**
+| 本质上来说，RunPosition=OnloadLan代表一组参数，实际与onload没有直接关系。
 
 TradingServerTimeout:10
 TCPMarketDataTimeout:10
