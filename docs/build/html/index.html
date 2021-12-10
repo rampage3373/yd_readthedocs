@@ -71,7 +71,29 @@
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">内容:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="pages/FAQ.html">常见问题</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pages/FAQ.html">常见问题</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#id2">投资者需要做哪些以保证性能最优化？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#logincoredump">为什么在login的时候coredump？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#getipmacinfocoredump">为什么会在getIPMacInfo函数中coredump？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#id3">如何实现多用户登录？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#udp">如果UDP行情会发生丢包，如何重发？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#md-data-tcptradingsocketcpuidtcptradingcpuid">如果只用交易，不用MD data，是否只有TCPTradingSocketCPUID和TCPTradingCPUID两个线程？绑定两个核就够了？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#onload-latencybusy-loop">因为onload-latency是busy_loop，如果开启，加上之前两个，是不是要三个？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#numactl-numactl-c-0-1-2">亲和性是否用Numactl设置总核数就行，比如numactl -C 0,1,2，不需要单独指定线程？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#onload-config-runposition-onloadlan">如果启动时候用了onload,是否还需要在config改#RunPosition=OnloadLAN？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#tcptradingcpuid-taskset-3-onload-p-latency-taskset-c-3-application">设置亲和性在TCPTradingCPUID设置了之后，运行的时候是不是还需要用taskset开启?比如亲和性设置了3号核，运行的时候还要运行onload -p latency taskset -c 3 ./[Application]</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#id4">是不是尽量不要把程序运行在0号核上？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#tradetime">成交回报中的tradetime是什么含义？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#id5">如何优选前置</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#id6">没有前置优选的情况下，配置多席位有什么意义？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#id7">客户端有哪些线程？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#api">使用裸协议报单能比API报单快多少？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#udptcp">我使用的是UDP报单还是TCP报单？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#id8">易达有行情吗？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#id9">为什么收不到易达行情？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pages/FAQ.html#id10">如何获取易达的席位编号</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </section>
